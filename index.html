@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blackjack Ledger Pro + Storage</title>
+    <title>Blackjack Vault | Secure Ledger</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
-        body { font-family: 'Space Mono', monospace; background-color: #000; color: #fff; }
+        body { font-family: 'Space Mono', monospace; background-color: #000; color: #fff; -webkit-font-smoothing: antialiased; }
         .card-glass { background: #0a0a0a; border: 1px solid #1a1a1a; }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
-        .scroll-hide::-webkit-scrollbar { display: none; }
+        .scroll-hide::-webkit-scrollbar { width: 4px; }
+        .scroll-hide::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
 <body class="min-h-screen p-4 flex flex-col items-center py-10">
@@ -18,104 +19,152 @@
     <div class="max-w-2xl w-full space-y-6">
         
         <div class="flex justify-between items-center px-2">
-            <h1 class="text-xl font-bold tracking-tighter">♠️ SYSTEM_VAULT</h1>
-            <div class="flex gap-2">
-                <button onclick="exportData()" class="text-[8px] border border-zinc-800 px-2 py-1 hover:bg-zinc-900 uppercase">Export</button>
-                <button onclick="document.getElementById('importFile').click()" class="text-[8px] border border-zinc-800 px-2 py-1 hover:bg-zinc-900 uppercase">Import</button>
+            <h1 class="text-xl font-bold tracking-tighter italic">♠️ VAULT_SYSTEM</h1>
+            <div class="flex items-center gap-3">
+                <button onclick="exportData()" class="text-[8px] text-zinc-500 hover:text-white uppercase tracking-widest">Export</button>
+                <button onclick="document.getElementById('importFile').click()" class="text-[8px] text-zinc-500 hover:text-white uppercase tracking-widest">Import</button>
                 <input type="file" id="importFile" class="hidden" onchange="importData(event)">
-                <input type="password" id="adminPass" placeholder="PASS" class="w-10 bg-transparent border-b border-zinc-800 text-[10px] outline-none text-red-600 ml-2">
+                <input type="password" id="adminPass" placeholder="PASS" class="w-16 bg-transparent border-b border-zinc-800 text-[10px] outline-none text-red-600 text-center ml-2">
             </div>
         </div>
 
-        <div class="card-glass p-6 rounded-2xl space-y-4">
-            <div class="grid grid-cols-2 gap-4">
+        <div class="card-glass p-6 rounded-2xl space-y-5">
+            <div class="grid grid-cols-2 gap-6">
                 <div class="col-span-2">
-                    <input type="text" id="pName" placeholder="PLAYER NAME" class="w-full bg-transparent border-b border-zinc-800 py-2 outline-none focus:border-white uppercase text-sm">
+                    <label class="text-[9px] text-zinc-600 uppercase">Player Identity</label>
+                    <input type="text" id="pName" placeholder="PLAYER NAME" class="w-full bg-transparent border-b border-zinc-800 py-2 outline-none focus:border-white uppercase text-sm font-bold">
                 </div>
                 <div>
-                    <label class="text-[9px] text-zinc-500 uppercase">Chips ($)</label>
-                    <input type="number" id="pChips" placeholder="0.00" class="w-full bg-transparent border-b border-zinc-800 py-1 outline-none">
+                    <label class="text-[9px] text-zinc-600 uppercase">Chips ($)</label>
+                    <input type="number" id="pChips" placeholder="0.00" class="w-full bg-transparent border-b border-zinc-800 py-1 outline-none text-green-500">
                 </div>
                 <div>
-                    <label class="text-[9px] text-zinc-500 uppercase">Debt (Owes)</label>
-                    <input type="text" id="debtor1" placeholder="Who?" class="w-full bg-transparent border-b border-zinc-800 py-1 text-[10px] outline-none mb-1 uppercase">
-                    <input type="number" id="debtAmt1" placeholder="$0.00" class="w-full bg-transparent border-b border-zinc-800 py-1 text-[10px] outline-none">
+                    <label class="text-[9px] text-zinc-600 uppercase">Debt (Owes To)</label>
+                    <input type="text" id="debtor1" placeholder="NAME" class="w-full bg-transparent border-b border-zinc-800 py-1 text-[10px] outline-none mb-1 uppercase">
+                    <input type="number" id="debtAmt1" placeholder="$0.00" class="w-full bg-transparent border-b border-zinc-800 py-1 text-[10px] outline-none text-red-500">
                 </div>
             </div>
-            <button onclick="writeAccount()" class="w-full py-4 bg-white text-black font-bold text-xs uppercase tracking-widest rounded-lg active:scale-95 transition-all">
-                Update & Save to Tag
-            </button>
-        </div>
 
-        <div id="displayArea" class="card-glass p-6 rounded-2xl opacity-20 transition-all border-dashed border-zinc-800">
-            <div class="flex justify-between items-baseline mb-4">
-                <h2 id="outName" class="text-xl font-bold italic">—</h2>
-                <div class="text-right">
-                    <p id="outNet" class="text-sm font-bold text-green-500">$0.00</p>
-                    <p class="text-[8px] text-zinc-600 uppercase italic">Net Worth</p>
-                </div>
-            </div>
-            <div id="debtList" class="space-y-1 mb-6"></div>
-            <div class="grid grid-cols-2 gap-2">
-                <button onclick="readAccount()" class="py-3 border border-zinc-800 rounded-lg text-[10px] font-bold uppercase">Scan Tag</button>
-                <button onclick="cashOut()" class="py-3 border border-red-900 text-red-900 rounded-lg text-[10px] font-bold uppercase">Cash Out</button>
+            <div class="grid grid-cols-1 gap-2 pt-4">
+                <button onclick="saveLocal()" class="border border-zinc-800 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-900 transition-all">
+                    💾 Update Local Database
+                </button>
+                <button onclick="saveBoth()" class="bg-white text-black py-4 rounded-lg text-[11px] font-bold uppercase tracking-widest hover:bg-zinc-200 active:scale-95 transition-all">
+                    ⚡ Sync Tag + Database
+                </button>
             </div>
         </div>
 
         <div class="card-glass p-6 rounded-2xl">
-            <h3 class="text-[10px] font-bold text-zinc-500 uppercase mb-4 tracking-[0.2em]">Local Audit Log (Saved)</h3>
-            <div id="storageLog" class="space-y-2 max-h-60 overflow-y-auto scroll-hide">
+            <h3 class="text-[10px] font-bold text-zinc-700 uppercase mb-4 tracking-[0.2em]">Master Ledger (Stored Records)</h3>
+            <div id="storageLog" class="space-y-1 max-h-64 overflow-y-auto pr-2 scroll-hide">
                 </div>
         </div>
 
-        <p id="status" class="text-[8px] text-zinc-800 text-center uppercase tracking-[0.4em]">Hardware.Standby</p>
+        <div id="displayArea" class="card-glass p-6 rounded-2xl opacity-20 border-dashed border-zinc-800">
+            <div class="flex justify-between items-baseline mb-4">
+                <h2 id="outName" class="text-xl font-bold italic uppercase">—</h2>
+                <div class="text-right">
+                    <p id="outNet" class="text-sm font-bold text-green-500">$0.00</p>
+                    <p class="text-[8px] text-zinc-600 uppercase italic text-[7px]">Net Worth</p>
+                </div>
+            </div>
+            <div id="debtList" class="space-y-1 mb-6"></div>
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="readAccount()" class="py-3 border border-zinc-800 rounded-lg text-[10px] font-bold uppercase hover:bg-zinc-950">Read Tag</button>
+                <button onclick="cashOut()" class="py-3 border border-red-900 text-red-900 rounded-lg text-[10px] font-bold uppercase hover:bg-red-950">Wipe Tag</button>
+            </div>
+        </div>
+
+        <p id="status" class="text-[8px] text-zinc-800 text-center uppercase tracking-[0.4em]">Ready.Await_Command</p>
     </div>
 
     <script>
         const PASS = "damian2013!248"; 
         let database = JSON.parse(localStorage.getItem('blackjack_db')) || {};
 
-        function saveDB() {
-            localStorage.setItem('blackjack_db', JSON.stringify(database));
-            renderLog();
+        function log(msg, err = false) {
+            const el = document.getElementById('status');
+            el.innerText = msg;
+            el.className = err ? "text-[8px] text-red-900 text-center uppercase tracking-[0.4em]" : "text-[8px] text-zinc-700 text-center uppercase tracking-[0.4em]";
         }
 
         function renderLog() {
             const logEl = document.getElementById('storageLog');
             logEl.innerHTML = '';
-            Object.values(database).reverse().forEach(p => {
+            const entries = Object.values(database).reverse();
+
+            if (entries.length === 0) {
+                logEl.innerHTML = '<p class="text-[10px] text-zinc-800 italic text-center py-4">Database is empty.</p>';
+                return;
+            }
+
+            entries.forEach(p => {
                 const net = p.c - (p.d1.amt || 0);
-                logEl.innerHTML += `
-                    <div class="flex justify-between items-center text-[10px] py-2 border-b border-zinc-900">
-                        <span class="font-bold uppercase">${p.n}</span>
-                        <span class="${net < 0 ? 'text-red-500' : 'text-zinc-400'}">$${net.toFixed(2)}</span>
+                const row = document.createElement('div');
+                row.className = "py-3 border-b border-zinc-900/50 space-y-1";
+
+                const mainInfo = `
+                    <div class="flex justify-between items-center text-[10px]">
+                        <span class="font-bold uppercase text-zinc-300">${p.n}</span>
+                        <span class="font-bold ${net < 0 ? 'text-red-500' : 'text-green-500'}">
+                            $${net.toFixed(2)}
+                        </span>
                     </div>`;
+
+                let breakdown = `<div class="flex justify-between text-[9px] text-zinc-600 uppercase tracking-tighter">
+                                    <span>Cash: $${p.c.toFixed(2)}</span>`;
+                
+                if (p.d1.name && p.d1.amt > 0) {
+                    breakdown += `<span class="text-red-900 font-bold">Owes ${p.d1.name}: $${p.d1.amt.toFixed(2)}</span>`;
+                } else {
+                    breakdown += `<span class="italic text-[7px] text-zinc-800">Clear of Debt</span>`;
+                }
+                breakdown += `</div>`;
+
+                row.innerHTML = mainInfo + breakdown;
+                logEl.appendChild(row);
             });
         }
 
-        async function writeAccount() {
-            if (document.getElementById('adminPass').value !== PASS) return alert("ACCESS DENIED");
-            
-            const player = {
-                n: document.getElementById('pName').value,
+        function getFormData() {
+            return {
+                n: document.getElementById('pName').value.trim(),
                 c: parseFloat(document.getElementById('pChips').value) || 0,
-                d1: { name: document.getElementById('debtor1').value, amt: parseFloat(document.getElementById('debtAmt1').value) || 0 }
+                d1: { name: document.getElementById('debtor1').value.trim(), amt: parseFloat(document.getElementById('debtAmt1').value) || 0 }
             };
+        }
 
-            if (!player.n) return;
+        function saveLocal() {
+            if (document.getElementById('adminPass').value !== PASS) return log("PASS_DENIED", true);
+            const player = getFormData();
+            if (!player.n) return log("NAME_REQUIRED", true);
+            
+            database[player.n] = player;
+            localStorage.setItem('blackjack_db', JSON.stringify(database));
+            renderLog();
+            log("LOCAL_DB_UPDATED");
+        }
+
+        async function saveBoth() {
+            if (document.getElementById('adminPass').value !== PASS) return log("PASS_DENIED", true);
+            const player = getFormData();
+            if (!player.n) return log("NAME_REQUIRED", true);
 
             try {
-                // Save to Local DB
-                database[player.n] = player;
-                saveDB();
-
-                // Attempt NFC Write
                 const ndef = new NDEFReader();
+                log("WAITING_FOR_CHIP...");
                 await ndef.write(JSON.stringify(player));
+                
+                database[player.n] = player;
+                localStorage.setItem('blackjack_db', JSON.stringify(database));
+                renderLog();
+                
                 if ("vibrate" in navigator) navigator.vibrate(200);
-                document.getElementById('status').innerText = "DATA_SYNCED";
-            } catch (e) { 
-                document.getElementById('status').innerText = "SAVED_TO_LOCAL_ONLY_NO_NFC";
+                log("SYNC_SUCCESSFUL");
+            } catch (e) {
+                log("NFC_ERROR_LOCAL_ONLY", true);
+                saveLocal();
             }
         }
 
@@ -123,55 +172,57 @@
             try {
                 const ndef = new NDEFReader();
                 await ndef.scan();
+                log("ACTIVE_SCAN...");
                 ndef.onreading = e => {
                     const data = JSON.parse(new TextDecoder().decode(e.message.records[0].data));
-                    const net = data.c - data.d1.amt;
+                    const net = data.c - (data.d1.amt || 0);
 
                     document.getElementById('outName').innerText = data.n;
                     document.getElementById('outNet').innerText = `$${net.toFixed(2)}`;
-                    document.getElementById('debtList').innerHTML = data.d1.name ? 
+                    document.getElementById('debtList').innerHTML = (data.d1.name && data.d1.amt > 0) ? 
                         `<div class="flex justify-between text-[10px] text-red-500"><span>OWES ${data.d1.name}</span><span>-$${data.d1.amt.toFixed(2)}</span></div>` : '';
                     
                     document.getElementById('displayArea').classList.replace('opacity-20', 'opacity-100');
                     if ("vibrate" in navigator) navigator.vibrate(100);
                     
-                    // Update Local DB with scanned data in case it's new
                     database[data.n] = data;
-                    saveDB();
+                    localStorage.setItem('blackjack_db', JSON.stringify(database));
+                    renderLog();
+                    log("SCAN_SYNCED");
                 };
-            } catch (e) { alert("NFC Read Failed: Ensure you are on Android Chrome."); }
+            } catch (e) { log("NFC_HARDWARE_ERROR", true); }
         }
 
         function exportData() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(database));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", "blackjack_accounts.json");
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
+            const dl = document.createElement('a');
+            dl.href = dataStr;
+            dl.download = "blackjack_ledger_backup.json";
+            dl.click();
         }
 
-        function importData(event) {
+        function importData(e) {
             const reader = new FileReader();
-            reader.onload = (e) => {
-                database = JSON.parse(e.target.result);
-                saveDB();
-                alert("Database Imported Successfully");
+            reader.onload = (event) => {
+                database = JSON.parse(event.target.result);
+                localStorage.setItem('blackjack_db', JSON.stringify(database));
+                renderLog();
+                log("DATABASE_RESTORED");
             };
-            reader.readAsText(event.target.files[0]);
+            reader.readAsText(e.target.files[0]);
         }
 
         async function cashOut() {
-            if (document.getElementById('adminPass').value !== PASS) return alert("ACCESS DENIED");
+            if (document.getElementById('adminPass').value !== PASS) return log("PASS_DENIED", true);
             try {
                 const ndef = new NDEFReader();
+                log("APPROACH_WIPE...");
                 await ndef.write(JSON.stringify({n: "EMPTY", c: 0, d1: {name: "", amt: 0}}));
-                document.getElementById('status').innerText = "TAG_CLEARED";
-            } catch (e) { alert("Tag Reset Failed"); }
+                log("TAG_RESET_COMPLETE");
+            } catch (e) { log("WIPE_FAILED", true); }
         }
 
-        renderLog(); // Initial Load
+        renderLog();
     </script>
 </body>
 </html>
