@@ -3,169 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFC Vault | Secure Ledger</title>
+    <title>Blackjack Ledger Pro + Storage</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #000; color: #fff; -webkit-font-smoothing: antialiased; }
-        .bento-card { border: 1px solid #1a1a1a; background: #050505; transition: all 0.4s ease; }
-        .bento-card:hover { border-color: #333; }
-        input::placeholder { color: #222; }
-        /* Chrome, Safari, Edge, Opera */
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+        body { font-family: 'Space Mono', monospace; background-color: #000; color: #fff; }
+        .card-glass { background: #0a0a0a; border: 1px solid #1a1a1a; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
+        .scroll-hide::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen p-4 flex flex-col items-center py-10">
 
-    <div class="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="max-w-2xl w-full space-y-6">
         
-        <div class="md:col-span-2 mb-6 px-2 flex justify-between items-end">
-            <div>
-                <h1 class="text-3xl font-light tracking-widest uppercase italic">NFC <span class="font-black not-italic text-white">VAULT</span></h1>
-                <div class="h-1 w-12 bg-white mt-2"></div>
-            </div>
-            <div class="text-[10px] text-zinc-700 font-mono text-right uppercase tracking-tighter">
-                Secure Client-Side<br>Encryption Active
+        <div class="flex justify-between items-center px-2">
+            <h1 class="text-xl font-bold tracking-tighter">♠️ SYSTEM_VAULT</h1>
+            <div class="flex gap-2">
+                <button onclick="exportData()" class="text-[8px] border border-zinc-800 px-2 py-1 hover:bg-zinc-900 uppercase">Export</button>
+                <button onclick="document.getElementById('importFile').click()" class="text-[8px] border border-zinc-800 px-2 py-1 hover:bg-zinc-900 uppercase">Import</button>
+                <input type="file" id="importFile" class="hidden" onchange="importData(event)">
+                <input type="password" id="adminPass" placeholder="PASS" class="w-10 bg-transparent border-b border-zinc-800 text-[10px] outline-none text-red-600 ml-2">
             </div>
         </div>
 
-        <div class="bento-card p-8 rounded-2xl flex flex-col space-y-6">
-            <h2 class="text-sm font-bold uppercase tracking-[0.2em] text-zinc-500">Secure Write</h2>
-            
-            <div class="space-y-4">
-                <div class="group">
-                    <label class="block text-[10px] uppercase text-zinc-600 mb-1">User Name</label>
-                    <input type="text" id="userName" placeholder="Full Name" 
-                        class="w-full bg-transparent border-b border-zinc-800 focus:border-white outline-none py-2 text-lg transition-all">
+        <div class="card-glass p-6 rounded-2xl space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-2">
+                    <input type="text" id="pName" placeholder="PLAYER NAME" class="w-full bg-transparent border-b border-zinc-800 py-2 outline-none focus:border-white uppercase text-sm">
                 </div>
-                <div class="group">
-                    <label class="block text-[10px] uppercase text-zinc-600 mb-1">Balance</label>
-                    <input type="number" id="userBalance" placeholder="0.00" 
-                        class="w-full bg-transparent border-b border-zinc-800 focus:border-white outline-none py-2 text-lg transition-all">
+                <div>
+                    <label class="text-[9px] text-zinc-500 uppercase">Chips ($)</label>
+                    <input type="number" id="pChips" placeholder="0.00" class="w-full bg-transparent border-b border-zinc-800 py-1 outline-none">
                 </div>
-                <div class="group pt-4 border-t border-zinc-900">
-                    <label class="block text-[10px] uppercase text-red-900 mb-1 font-bold">Admin Password</label>
-                    <input type="password" id="adminPass" placeholder="••••••••" 
-                        class="w-full bg-transparent border-b border-zinc-800 focus:border-red-900 outline-none py-2 text-lg transition-all text-red-500">
+                <div>
+                    <label class="text-[9px] text-zinc-500 uppercase">Debt (Owes)</label>
+                    <input type="text" id="debtor1" placeholder="Who?" class="w-full bg-transparent border-b border-zinc-800 py-1 text-[10px] outline-none mb-1 uppercase">
+                    <input type="number" id="debtAmt1" placeholder="$0.00" class="w-full bg-transparent border-b border-zinc-800 py-1 text-[10px] outline-none">
                 </div>
             </div>
-
-            <button onclick="writeToTag()" 
-                class="w-full py-4 bg-white text-black font-black uppercase text-[10px] tracking-[0.3em] hover:bg-zinc-200 active:scale-[0.98] transition-all rounded-lg">
-                Authorize & Write
+            <button onclick="writeAccount()" class="w-full py-4 bg-white text-black font-bold text-xs uppercase tracking-widest rounded-lg active:scale-95 transition-all">
+                Update & Save to Tag
             </button>
         </div>
 
-        <div class="bento-card p-8 rounded-2xl flex flex-col justify-between border-dashed border-zinc-800">
-            <div>
-                <h2 class="text-sm font-bold uppercase tracking-[0.2em] text-zinc-500 mb-10">Scan Result</h2>
-                <div id="readOutput" class="space-y-8 opacity-10 transition-all duration-700">
-                    <div>
-                        <p class="text-[10px] uppercase text-zinc-600">User</p>
-                        <p id="displayName" class="text-3xl font-light tracking-tight">—</p>
-                    </div>
-                    <div>
-                        <p class="text-[10px] uppercase text-zinc-600">Balance</p>
-                        <p id="displayBalance" class="text-4xl font-black italic text-zinc-200">—</p>
-                    </div>
+        <div id="displayArea" class="card-glass p-6 rounded-2xl opacity-20 transition-all border-dashed border-zinc-800">
+            <div class="flex justify-between items-baseline mb-4">
+                <h2 id="outName" class="text-xl font-bold italic">—</h2>
+                <div class="text-right">
+                    <p id="outNet" class="text-sm font-bold text-green-500">$0.00</p>
+                    <p class="text-[8px] text-zinc-600 uppercase italic">Net Worth</p>
                 </div>
             </div>
-            <button onclick="readTag()" 
-                class="w-full py-4 mt-12 border border-zinc-800 text-white font-black uppercase text-[10px] tracking-[0.3em] hover:bg-zinc-900 active:scale-[0.98] transition-all rounded-lg">
-                Read Chip
-            </button>
-        </div>
-
-        <div class="md:col-span-2 mt-4">
-            <div id="statusBox" class="bg-zinc-900/30 border border-zinc-900 p-3 rounded-lg flex items-center justify-between">
-                <span id="status" class="text-[10px] font-mono text-zinc-600 uppercase tracking-widest flex items-center">
-                    System Idle
-                </span>
+            <div id="debtList" class="space-y-1 mb-6"></div>
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="readAccount()" class="py-3 border border-zinc-800 rounded-lg text-[10px] font-bold uppercase">Scan Tag</button>
+                <button onclick="cashOut()" class="py-3 border border-red-900 text-red-900 rounded-lg text-[10px] font-bold uppercase">Cash Out</button>
             </div>
         </div>
+
+        <div class="card-glass p-6 rounded-2xl">
+            <h3 class="text-[10px] font-bold text-zinc-500 uppercase mb-4 tracking-[0.2em]">Local Audit Log (Saved)</h3>
+            <div id="storageLog" class="space-y-2 max-h-60 overflow-y-auto scroll-hide">
+                </div>
+        </div>
+
+        <p id="status" class="text-[8px] text-zinc-800 text-center uppercase tracking-[0.4em]">Hardware.Standby</p>
     </div>
 
     <script>
-        // CHANGE YOUR PASSWORD HERE
-        const SECRET_PASSWORD = "damian2013!248"; 
+        const PASS = "damian2013!248"; 
+        let database = JSON.parse(localStorage.getItem('blackjack_db')) || {};
 
-        const statusEl = document.getElementById('status');
-
-        function updateStatus(msg, isError = false) {
-            statusEl.innerHTML = `<span class="inline-block w-1.5 h-1.5 ${isError ? 'bg-red-800' : 'bg-zinc-600'} rounded-full mr-3"></span>${msg}`;
-            if (isError) {
-                // Short double vibrate for error
-                if ("vibrate" in navigator) navigator.vibrate([50, 50, 50]);
-            }
+        function saveDB() {
+            localStorage.setItem('blackjack_db', JSON.stringify(database));
+            renderLog();
         }
 
-        async function writeToTag() {
-            const name = document.getElementById('userName').value;
-            const balance = document.getElementById('userBalance').value;
-            const passInput = document.getElementById('adminPass').value;
+        function renderLog() {
+            const logEl = document.getElementById('storageLog');
+            logEl.innerHTML = '';
+            Object.values(database).reverse().forEach(p => {
+                const net = p.c - (p.d1.amt || 0);
+                logEl.innerHTML += `
+                    <div class="flex justify-between items-center text-[10px] py-2 border-b border-zinc-900">
+                        <span class="font-bold uppercase">${p.n}</span>
+                        <span class="${net < 0 ? 'text-red-500' : 'text-zinc-400'}">$${net.toFixed(2)}</span>
+                    </div>`;
+            });
+        }
 
-            // 1. Password Check
-            if (passInput !== SECRET_PASSWORD) {
-                updateStatus("Security Error: Invalid Admin Password", true);
-                return;
-            }
+        async function writeAccount() {
+            if (document.getElementById('adminPass').value !== PASS) return alert("ACCESS DENIED");
+            
+            const player = {
+                n: document.getElementById('pName').value,
+                c: parseFloat(document.getElementById('pChips').value) || 0,
+                d1: { name: document.getElementById('debtor1').value, amt: parseFloat(document.getElementById('debtAmt1').value) || 0 }
+            };
 
-            if (!name || !balance) {
-                updateStatus("Input Error: Data Fields Empty", true);
-                return;
-            }
-
-            const data = JSON.stringify({ name, balance });
+            if (!player.n) return;
 
             try {
-                if (!('NDEFReader' in window)) throw new Error("Web NFC unsupported");
-                
+                // Save to Local DB
+                database[player.n] = player;
+                saveDB();
+
+                // Attempt NFC Write
                 const ndef = new NDEFReader();
-                updateStatus("Ready: Hold Chip to Back of Phone...");
-                await ndef.write(data);
-                
-                // Success feedback
+                await ndef.write(JSON.stringify(player));
                 if ("vibrate" in navigator) navigator.vibrate(200);
-                updateStatus("Success: Tag Encrypted");
-                
-                // Clear password and inputs
-                document.getElementById('adminPass').value = '';
-                document.getElementById('userName').value = '';
-                document.getElementById('userBalance').value = '';
-            } catch (error) {
-                updateStatus(`HW Error: ${error.message}`, true);
+                document.getElementById('status').innerText = "DATA_SYNCED";
+            } catch (e) { 
+                document.getElementById('status').innerText = "SAVED_TO_LOCAL_ONLY_NO_NFC";
             }
         }
 
-        async function readTag() {
+        async function readAccount() {
             try {
-                if (!('NDEFReader' in window)) throw new Error("Web NFC unsupported");
-
                 const ndef = new NDEFReader();
                 await ndef.scan();
-                updateStatus("Scanning: Tap Chip...");
+                ndef.onreading = e => {
+                    const data = JSON.parse(new TextDecoder().decode(e.message.records[0].data));
+                    const net = data.c - data.d1.amt;
 
-                ndef.onreading = event => {
-                    const decoder = new TextDecoder();
-                    for (const record of event.message.records) {
-                        const rawData = decoder.decode(record.data);
-                        try {
-                            const parsed = JSON.parse(rawData);
-                            document.getElementById('displayName').innerText = parsed.name;
-                            document.getElementById('displayBalance').innerText = `$${parsed.balance}`;
-                            document.getElementById('readOutput').classList.replace('opacity-10', 'opacity-100');
-                            
-                            if ("vibrate" in navigator) navigator.vibrate(100);
-                            updateStatus("Read: Complete");
-                        } catch (e) {
-                            updateStatus("Data Error: Chip format unrecognized", true);
-                        }
-                    }
+                    document.getElementById('outName').innerText = data.n;
+                    document.getElementById('outNet').innerText = `$${net.toFixed(2)}`;
+                    document.getElementById('debtList').innerHTML = data.d1.name ? 
+                        `<div class="flex justify-between text-[10px] text-red-500"><span>OWES ${data.d1.name}</span><span>-$${data.d1.amt.toFixed(2)}</span></div>` : '';
+                    
+                    document.getElementById('displayArea').classList.replace('opacity-20', 'opacity-100');
+                    if ("vibrate" in navigator) navigator.vibrate(100);
+                    
+                    // Update Local DB with scanned data in case it's new
+                    database[data.n] = data;
+                    saveDB();
                 };
-            } catch (error) {
-                updateStatus(`HW Error: ${error.message}`, true);
-            }
+            } catch (e) { alert("NFC Read Failed: Ensure you are on Android Chrome."); }
         }
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(database));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "blackjack_accounts.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function importData(event) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                database = JSON.parse(e.target.result);
+                saveDB();
+                alert("Database Imported Successfully");
+            };
+            reader.readAsText(event.target.files[0]);
+        }
+
+        async function cashOut() {
+            if (document.getElementById('adminPass').value !== PASS) return alert("ACCESS DENIED");
+            try {
+                const ndef = new NDEFReader();
+                await ndef.write(JSON.stringify({n: "EMPTY", c: 0, d1: {name: "", amt: 0}}));
+                document.getElementById('status').innerText = "TAG_CLEARED";
+            } catch (e) { alert("Tag Reset Failed"); }
+        }
+
+        renderLog(); // Initial Load
     </script>
 </body>
 </html>
