@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFC Personal Ledger</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #000; 
+            color: #fff;
+            -webkit-font-smoothing: antialiased;
+        }
+        .bento-card { 
+            border: 1px solid #1a1a1a; 
+            background: #050505; 
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        .bento-card:hover { 
+            border-color: #444; 
+            transform: translateY(-2px);
+        }
+        input::placeholder { color: #333; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <div class="md:col-span-2 mb-6 px-2">
+            <h1 class="text-3xl font-light tracking-widest uppercase italic">NFC <span class="font-black not-italic text-white">CREDIT</span></h1>
+            <div class="h-1 w-12 bg-white mt-2"></div>
+        </div>
+
+        <div class="bento-card p-8 rounded-2xl flex flex-col space-y-8">
+            <div>
+                <h2 class="text-sm font-bold uppercase tracking-[0.2em] text-zinc-500 mb-6">Initialize User</h2>
+                <div class="space-y-6">
+                    <div class="group">
+                        <label class="block text-[10px] uppercase text-zinc-600 mb-1 group-focus-within:text-white transition-colors">Assign Name</label>
+                        <input type="text" id="userName" placeholder="Type name..." 
+                            class="w-full bg-transparent border-b border-zinc-800 focus:border-white outline-none py-2 text-xl transition-all">
+                    </div>
+                    <div class="group">
+                        <label class="block text-[10px] uppercase text-zinc-600 mb-1 group-focus-within:text-white transition-colors">Initial Balance</label>
+                        <input type="number" id="userBalance" placeholder="0.00" 
+                            class="w-full bg-transparent border-b border-zinc-800 focus:border-white outline-none py-2 text-xl transition-all">
+                    </div>
+                </div>
+            </div>
+            <button onclick="writeToTag()" 
+                class="w-full py-4 bg-white text-black font-black uppercase text-[10px] tracking-[0.3em] hover:bg-zinc-200 active:scale-[0.98] transition-all rounded-lg">
+                Write to Hardware
+            </button>
+        </div>
+
+        <div class="bento-card p-8 rounded-2xl flex flex-col justify-between border-dashed border-zinc-800">
+            <div>
+                <h2 class="text-sm font-bold uppercase tracking-[0.2em] text-zinc-500 mb-10">Scan Result</h2>
+                <div id="readOutput" class="space-y-8 opacity-20 transition-all duration-700">
+                    <div>
+                        <p class="text-[10px] uppercase text-zinc-600">Identified User</p>
+                        <p id="displayName" class="text-3xl font-light tracking-tight">—</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] uppercase text-zinc-600">Stored Balance</p>
+                        <p id="displayBalance" class="text-4xl font-black italic">—</p>
+                    </div>
+                </div>
+            </div>
+            <button onclick="readTag()" 
+                class="w-full py-4 mt-12 border border-zinc-800 text-white font-black uppercase text-[10px] tracking-[0.3em] hover:bg-zinc-900 active:scale-[0.98] transition-all rounded-lg">
+                Activate Reader
+            </button>
+        </div>
+
+        <div class="md:col-span-2 mt-4">
+            <div id="statusBox" class="bg-zinc-900/50 border border-zinc-800 p-3 rounded-lg flex items-center justify-between">
+                <span id="status" class="text-[10px] font-mono text-zinc-500 uppercase tracking-widest italic flex items-center">
+                    <span class="inline-block w-2 h-2 bg-zinc-700 rounded-full mr-3 animate-pulse"></span>
+                    System Awaiting Command
+                </span>
+                <span class="text-[10px] text-zinc-800 font-mono">v1.0.0_STABLE</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const statusEl = document.getElementById('status');
+
+        function updateStatus(msg, isError = false) {
+            statusEl.innerHTML = `<span class="inline-block w-2 h-2 ${isError ? 'bg-red-500' : 'bg-green-500'} rounded-full mr-3"></span>${msg}`;
+            if (isError) console.error(msg);
+        }
+
+        async function writeToTag() {
+            const name = document.getElementById('userName').value;
+            const balance = document.getElementById('userBalance').value;
+
+            if (!name || !balance) {
+                updateStatus("Input Required: Missing Name/Balance", true);
+                return;
+            }
+
+            const data = JSON.stringify({ name, balance, lastUpdate: new Date().toLocaleDateString() });
+
+            try {
+                if (!('NDEFReader' in window)) throw new Error("Web NFC not supported on this browser.");
+                
+                const ndef = new NDEFReader();
+                updateStatus("Hardware Ready: Tap Tag Now...");
+                await ndef.write(data);
+                updateStatus("Success: Tag Encoded Successfully");
+                
+                // Reset inputs
+                document.getElementById('userName').value = '';
+                document.getElementById('userBalance').value = '';
+            } catch (error) {
+                updateStatus(`Hardware Error: ${error.message}`, true);
+            }
+        }
+
+        async function readTag() {
+            try {
+                if (!('NDEFReader' in window)) throw new Error("Web NFC not supported on this browser.");
+
+                const ndef = new NDEFReader();
+                await ndef.scan();
+                updateStatus("Active: Listening for Tag...");
+
+                ndef.onreading = event => {
+                    const decoder = new TextDecoder();
+                    for (const record of event.message.records) {
+                        const rawData = decoder.decode(record.data);
+                        try {
+                            const parsed = JSON.parse(rawData);
+                            document.getElementById('displayName').innerText = parsed.name;
+                            document.getElementById('displayBalance').innerText = `$${parsed.balance}`;
+                            document.getElementById('readOutput').classList.remove('opacity-20');
+                            updateStatus("Read Success: Data Retrieved");
+                        } catch (e) {
+                            updateStatus("Format Error: Invalid JSON on Tag", true);
+                        }
+                    }
+                };
+            } catch (error) {
+                updateStatus(`Hardware Error: ${error.message}`, true);
+            }
+        }
+    </script>
+</body>
+</html>
